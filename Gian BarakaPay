@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gian BarakaPay | v14.4 Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #05070A; --card: #0F1219; --gold: #FFD700; --text: #FFFFFF; 
+            --dim: #94A3B8; --danger: #FF4D4D; --success: #10B981; --border: rgba(255,215,0,0.15);
+        }
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        .hidden { display: none !important; }
+
+        .sidebar { width: 260px; background: #000; padding: 40px 20px; border-right: 1px solid #1A1D23; display: flex; flex-direction: column; }
+        .logo { font-size: 24px; font-weight: 800; margin-bottom: 50px; letter-spacing: -1px; }
+        .nav-link { padding: 14px 18px; color: var(--dim); cursor: pointer; border-radius: 14px; margin-bottom: 10px; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 12px; }
+        .nav-link.active { background: var(--gold); color: #000; }
+
+        .main { flex: 1; padding: 40px 60px; overflow-y: auto; }
+        .header { display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+        .stat-card { 
+            background: linear-gradient(145deg, #12151C, #0F1219); padding: 30px; border-radius: 28px; 
+            border: 1px solid var(--border); position: relative; overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        .stat-card p { margin: 0; font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card h2 { margin: 12px 0 0; font-size: 32px; font-weight: 800; }
+
+        .table-container { background: var(--card); border-radius: 24px; border: 1px solid var(--border); margin-top: 35px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--dim); padding: 20px; font-size: 11px; text-transform: uppercase; background: rgba(255,255,255,0.02); }
+        td { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        
+        .inline-input { background: rgba(255,215,0,0.1); border: 1px solid var(--border); color: var(--gold); width: 65px; text-align: center; padding: 8px; border-radius: 10px; font-weight: 800; }
+        .pass-edit { background: #000; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 8px; width: 110px; }
+
+        .btn { padding: 12px 24px; border-radius: 14px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-outline { background: transparent; color: var(--dim); border: 1px solid #2D323E; }
+
+        .status-pill { padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; }
+        .active-ui { background: rgba(16,185,129,0.15); color: var(--success); }
+        .inactive-ui { background: rgba(255,77,77,0.15); color: var(--danger); }
+
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #000; z-index: 2000; display: flex; justify-content: center; align-items: center; }
+        .pay-box { background: rgba(255,77,77,0.05); border: 1px dashed var(--danger); color: #FFCDCD; padding: 15px; border-radius: 16px; font-size: 12.5px; margin-top: 15px; font-weight: 600; line-height: 1.6; }
+        
+        .chart-bar { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .chart-fill { height: 100%; background: var(--gold); transition: 1s ease-out; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="overlay">
+        <div class="stat-card" style="width: 350px; text-align: center;">
+            <div style="background:var(--gold); color:#000; width:50px; height:50px; border-radius:12px; margin:0 auto 20px; font-weight:800; font-size:24px; display:flex; align-items:center; justify-content:center;">G</div>
+            <h2 style="margin-bottom: 25px;">Gian BarakaPay</h2>
+            <input type="text" id="user-in" placeholder="Church ID" style="width:100%; padding:15px; border-radius:12px; border:1px solid #222; background:#000; color:#fff; margin-bottom:10px;">
+            <input type="password" id="pass-in" placeholder="Password" style="width:100%; padding:15px; border-radius:12px; border:1px solid #222; background:#000; color:#fff; margin-bottom:20px;">
+            <button class="btn btn-gold" style="width:100%;" onclick="login()">INGIA KWENYE MFUMO</button>
+        </div>
+    </div>
+
+    <aside class="sidebar hidden" id="aside">
+        <div class="logo">Gian <span style="color:var(--gold)">BarakaPay</span></div>
+        <div id="church-menu">
+            <div class="nav-link active" id="l-dash" onclick="switchView('dash')">📊 Overview</div>
+            <div class="nav-link" id="l-members" onclick="switchView('members')">👥 Members & SMS</div>
+        </div>
+        <div id="dev-menu" class="hidden">
+            <div class="nav-link active" onclick="switchView('dev')">🛡 System Admin</div>
+        </div>
+        <button class="btn btn-outline" style="margin-top: auto;" onclick="logout()">LOGOUT</button>
+    </aside>
+
+    <main class="main hidden" id="main-area">
+        <header class="header"><h1 id="v-title">Dashboard</h1><div id="v-status"></div></header>
+
+        <div id="view-dash">
+            <div class="grid">
+                <div class="stat-card">
+                    <p>Mapato (Mwezi Huu)</p>
+                    <h2 id="c-total">TZS 0</h2>
+                    <div class="chart-bar"><div class="chart-fill" style="width: 70%;"></div></div>
+                </div>
+                <div class="stat-card">
+                    <p>Muda wa Huduma</p>
+                    <h2 id="c-days" style="color:var(--gold)">0 Days</h2>
+                    <p style="margin-top:10px; font-size:10px;">Hali ya Akaunti</p>
+                </div>
+                <div class="stat-card" id="pay-card">
+                    <p id="pay-label">Commission (3%)</p>
+                    <h2 id="c-fee">TZS 0</h2>
+                    <div id="pay-instructions" class="pay-box hidden"></div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div style="padding:20px; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0;">Miamala ya Sadaka</h3>
+                    <button class="btn btn-gold" style="padding:8px 15px; font-size:11px;" onclick="simulatePayment()">SIMULATE SMS</button>
+                </div>
+                <table>
+                    <thead><tr><th>MUDA</th><th>JINA</th><th>KIASI</th><th>STATUS SMS</th></tr></thead>
+                    <tbody id="tx-log"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-members" class="hidden">
+            <div class="stat-card" style="margin-bottom:30px;">
+                <h3>Ujumbe wa Shukrani (Auto-SMS)</h3>
+                <textarea id="thanks-msg" rows="2" style="width:100%; background:#000; border:1px solid #222; color:#fff; border-radius:12px; padding:15px; margin-top:10px;"></textarea>
+                <button class="btn btn-gold" style="margin-top:15px;" onclick="saveSms()">SAVE TEMPLATE</button>
+            </div>
+            <div class="table-container">
+                <div style="padding:20px; display:flex; justify-content:space-between;"><h3>Orodha ya Waumini</h3><button class="btn btn-outline" onclick="downloadTemplate()">📥 Pakua Excel Template</button></div>
+                <div style="padding:0 20px 20px;"><input type="file" onchange="handleExcel(event)"></div>
+                <table><thead><tr><th>JINA KAMILI</th><th>NAMBA YA SIMU</th></tr></thead><tbody id="member-db"></tbody></table>
+            </div>
+        </div>
+
+        <div id="view-dev" class="hidden">
+            <div class="grid" style="margin-bottom:30px;">
+                <div class="stat-card" style="border: 1px solid var(--gold);">
+                    <p style="color:var(--gold)">ADMIN: NAMBA YA MALIPO</p>
+                    <input type="text" id="admin-pay-no" placeholder="Namba yako (M-Pesa/Tigo)" style="width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #333; background:#000; color:#fff;">
+                    <button class="btn btn-gold" style="margin-top:10px; width:100%;" onclick="saveAdminPay()">SAVE CONFIG</button>
+                </div>
+                <div class="stat-card" style="grid-column: span 2;">
+                    <p>USAJILI WA KANISA JIPYA</p>
+                    <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; margin-top:10px;">
+                        <input type="text" id="new-name" placeholder="Jina la Kanisa" style="background:#000; border:1px solid #222; color:#fff; padding:10px; border-radius:8px;">
+                        <input type="password" id="new-pass" placeholder="Password" style="background:#000; border:1px solid #222; color:#fff; padding:10px; border-radius:8px;">
+                        <button class="btn btn-gold" onclick="registerChurch()">USAJILI</button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>ID</th><th>KANISA</th><th>MAPATO</th><th>3% FEE</th><th>SIKU</th><th>PASS</th><th>HALI</th></tr></thead>
+                    <tbody id="dev-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const KEY = 'gian_barakapay_v14_4_pro';
+        let state = JSON.parse(localStorage.getItem(KEY)) || {
+            config: { payNo: "07XX XXX XXX" },
+            churches: {
+                "Developer": { name: "System Admin", role: "admin", pass: "9302" },
+                "SG-101": { name: "RGG MINISTRIES", role: "church", pass: "rgg2026", revenue: 0, expiry: "2026-04-10", members: [], txs: [], smsTemplate: "Ahsante kwa kutoa sadaka." }
+            },
+            nextID: 102
+        };
+
+        const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+
+        function login() {
+            const u = document.getElementById('user-in').value, p = document.getElementById('pass-in').value;
+            if (state.churches[u] && String(state.churches[u].pass) === String(p)) {
+                localStorage.setItem('g_session', u); renderApp();
+            } else { alert("Nenosiri si sahihi!"); }
+        }
+
+        function renderApp() {
+            const user = localStorage.getItem('g_session');
+            if (!user) return;
+            const curr = state.churches[user];
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('aside').classList.remove('hidden');
+            document.getElementById('main-area').classList.remove('hidden');
+
+            if (curr.role === 'admin') {
+                document.getElementById('church-menu').classList.add('hidden');
+                document.getElementById('dev-menu').classList.remove('hidden');
+                document.getElementById('admin-pay-no').value = state.config.payNo;
+                switchView('dev'); renderAdmin();
+            } else {
+                document.getElementById('church-menu').classList.remove('hidden');
+                document.getElementById('dev-menu').classList.add('hidden');
+                switchView('dash'); renderChurch(user);
+            }
+        }
+
+        function renderChurch(id) {
+            const c = state.churches[id];
+            const diff = Math.ceil((new Date(c.expiry) - new Date()) / (1000*60*60*24));
+            const daysLeft = diff > 0 ? diff : 0;
+            const commission = Math.floor(c.revenue * 0.03);
+            
+            document.getElementById('v-title').innerText = c.name;
+            document.getElementById('c-total').innerText = "TZS " + c.revenue.toLocaleString();
+            document.getElementById('c-days').innerText = daysLeft + " Days";
+
+            const feeLabel = document.getElementById('pay-label');
+            const feeVal = document.getElementById('c-fee');
+            const instructions = document.getElementById('pay-instructions');
+
+            if (daysLeft <= 0) {
+                feeLabel.innerText = "LIPA ILI KUENDELEA";
+                feeLabel.style.color = "var(--danger)";
+                feeVal.innerText = "TZS " + commission.toLocaleString();
+                instructions.innerHTML = `⚠️ <b>MFUMO UMEFUNGA</b><br>Tuma asilimia 3% ya mapato yako (<b>TZS ${commission.toLocaleString()}</b>) kwenda namba <b>${state.config.payNo}</b> ili kuendelea na huduma.`;
+                instructions.classList.remove('hidden');
+            } else {
+                feeLabel.innerText = "Commission (3%)";
+                feeLabel.style.color = "var(--dim)";
+                feeVal.innerText = "TZS " + commission.toLocaleString();
+                instructions.classList.add('hidden');
+            }
+
+            document.getElementById('v-status').innerHTML = daysLeft > 0 ? `<span class="status-pill active-ui">ACTIVE</span>` : `<span class="status-pill inactive-ui">DEACTIVATED</span>`;
+            document.getElementById('tx-log').innerHTML = c.txs.slice(0, 15).map(t => `<tr><td>${t.time}</td><td><b>${t.name}</b></td><td>TZS ${t.amount}</td><td style="color:var(--success); font-size:11px;">Imetunza & SMS Imetumwa</td></tr>`).join('');
+            document.getElementById('member-db').innerHTML = c.members.map(m => `<tr><td>${m.name}</td><td>${m.phone}</td></tr>`).join('');
+            document.getElementById('thanks-msg').value = c.smsTemplate || "";
+        }
+
+        function renderAdmin() {
+            const body = document.getElementById('dev-body'); body.innerHTML = "";
+            for (let id in state.churches) {
+                if (state.churches[id].role === 'church') {
+                    let c = state.churches[id];
+                    let diff = Math.ceil((new Date(c.expiry) - new Date()) / (1000*60*60*24));
+                    body.innerHTML += `<tr>
+                        <td><code>${id}</code></td><td><b>${c.name}</b></td>
+                        <td>TZS ${c.revenue.toLocaleString()}</td><td>TZS ${Math.floor(c.revenue*0.03).toLocaleString()}</td>
+                        <td><input type="number" class="inline-input" value="${diff > 0 ? diff : 0}" onkeydown="updateDays(event, '${id}')"></td>
+                        <td><input type="text" class="pass-edit" value="${c.pass}" onkeydown="updatePass(event, '${id}')"></td>
+                        <td><span class="status-pill ${diff > 0 ? 'active-ui' : 'inactive-ui'}">${diff > 0 ? 'ACTIVE' : 'OFF'}</span></td>
+                    </tr>`;
+                }
+            }
+        }
+
+        function saveAdminPay() {
+            state.config.payNo = document.getElementById('admin-pay-no').value;
+            save(); alert("Namba ya malipo imesasishwa!");
+        }
+
+        // FIX: Hapa sasa namba 0 inafunga na namba nyingine inaongeza kuanzia leo
+        function updateDays(e, id) {
+            if (e.key === 'Enter') {
+                let val = parseInt(e.target.value);
+                let d = new Date();
+                if(val <= 0) {
+                    d.setDate(d.getDate() - 1); // Weka jana ili iishe leo
+                } else {
+                    d.setDate(d.getDate() + val);
+                }
+                state.churches[id].expiry = d.toISOString().split('T')[0];
+                save(); renderAdmin(); alert("Muda wa " + state.churches[id].name + " umesasishwa!");
+            }
+        }
+
+        function updatePass(e, id) {
+            if (e.key === 'Enter') { state.churches[id].pass = e.target.value; save(); renderAdmin(); alert("Password imesasishwa!"); }
+        }
+
+        function simulatePayment() {
+            const id = localStorage.getItem('g_session');
+            const c = state.churches[id];
+            if (new Date() > new Date(c.expiry)) return alert("Akaunti imefungwa. Lipia kupata huduma!");
+            const amounts = [2000, 5000, 10000, 50000];
+            const amount = amounts[Math.floor(Math.random() * amounts.length)];
+            const phone = "07" + Math.floor(10000000 + Math.random() * 90000000);
+            const m = c.members.find(mu => mu.phone === phone) || { name: "Muumini Mpya" };
+            c.txs.unshift({ time: new Date().toLocaleTimeString(), name: m.name, amount: amount.toLocaleString() });
+            c.revenue += amount; save(); renderChurch(id);
+        }
+
+        function downloadTemplate() {
+            const csv = "Jina,Namba ya Simu\nJohn Doe,0788123456";
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'BarakaPay_Template.csv'; a.click();
+        }
+
+        function handleExcel(e) {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const id = localStorage.getItem('g_session');
+                state.churches[id].members = evt.target.result.split('\n').map(l => {
+                    const [n, p] = l.split(','); return { name: n?.trim(), phone: p?.trim() };
+                }).filter(m => m.name && m.phone);
+                save(); renderChurch(id); alert("Orodha imepakiwa!");
+            };
+            reader.readAsText(e.target.files[0]);
+        }
+
+        function registerChurch() {
+            const n = document.getElementById('new-name').value, p = document.getElementById('new-pass').value;
+            if(!n || !p) return alert("Jaza jina na password");
+            const id = "SG-" + state.nextID++;
+            state.churches[id] = { name: n, role: "church", pass: p, revenue: 0, expiry: new Date().toISOString().split('T')[0], members: [], txs: [], smsTemplate: "Barikiwa sana." };
+            save(); renderAdmin(); alert("Akaunti Imesajiliwa!");
+        }
+
+        function saveSms() {
+            const id = localStorage.getItem('g_session');
+            state.churches[id].smsTemplate = document.getElementById('thanks-msg').value;
+            save(); alert("Template imehifadhiwa!");
+        }
+
+        function switchView(v) {
+            ['dash', 'members', 'dev'].forEach(view => document.getElementById('view-'+view)?.classList.add('hidden'));
+            document.getElementById('view-'+v).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            if(document.getElementById('l-'+v)) document.getElementById('l-'+v).classList.add('active');
+        }
+
+        function logout() { localStorage.removeItem('g_session'); location.reload(); }
+        window.onload = renderApp;
+    </script>
+</body>
+</html>
